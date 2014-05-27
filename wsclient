@@ -1,0 +1,85 @@
+#!/usr/bin/perl
+
+use utf8;
+use strict;
+use warnings;
+
+use Protocol::WebSocket::Handshake::Client;
+use Protocol::WebSocket::Frame;
+use IO::Socket;
+use IO::Socket::INET6;
+use IO::Select;
+use open ':utf8';
+use open ':std';
+
+$| = 1;
+
+run();
+
+sub run {
+  my $select = IO::Select->new;
+
+  my $s = IO::Socket::INET6->new(PeerAddr => '::1', PeerPort => 8334, Proto => 'tcp');
+  return unless $s->connected;
+
+  my $hc = Protocol::WebSocket::Handshake::Client->new(url => 'ws://[::1]:8334');
+  $select->add($s);
+  # handshare request
+  print $s $hc->to_string;
+
+  while (my (@sockets) = $select->can_read(1)) {
+    # recieving response
+    foreach my $s (@sockets) {
+      $s->sysread(my $buf, 1000);
+      print $buf;
+    }
+  }
+
+  print "\n\n--- finish handshare with chat server ---\n\n";
+
+  $select->add(\*STDIN);
+
+  local @SIG{qw/INT TERM ALRM/} = (sub { client_exit($select); }) x 3;
+
+  my @messages;
+ LOOP:
+  while (1) {
+    foreach my $socket ($select->can_read(0.5)) {
+      if (ref $socket eq 'IO::Socket::INET6') {
+        # read from websocket
+        $socket->sysread(my $buf, 1000);
+        print $buf;
+      } else {
+        my $msg = <STDIN>;
+        last LOOP unless $msg;
+
+        chomp($msg);
+        if ($msg) {
+          push @messages, Protocol::WebSocket::Frame->new($msg)->to_string;
+        }
+      }
+      foreach my $socket ($select->can_write(0.5)) {
+        if (ref $socket eq 'IO::Socket::INET6' and my $msg = shift @messages) {
+          print $socket $msg;;
+        }
+      }
+    }
+  }
+  client_exit($select);
+}
+
+sub client_exit {
+  my ($select) = @_;
+  foreach my $s ($select->handles) {
+    $select->remove($s);
+
+    if (ref $s eq 'IO::Socket::INET6') {
+      if ($s->connected) {
+        # close connection
+        print $s "\xFF\x00";
+        close $s
+      }
+    }
+  }
+  exit;
+}
