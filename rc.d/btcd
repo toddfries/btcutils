@@ -13,7 +13,47 @@ pexp="btcd.*btcd.conf"
 rc_reload=NO
 
 rc_start() {
-	${rcexec} "/usr/bin/time -l ${daemon} ${daemon_flags} 2>&1 | logger -t 'btcd(mainnet)' -p daemon.info &"
+	${rcexec} "/usr/bin/time -l ${daemon} ${daemon_flags}" 2>&1 | \
+		_log mainnet &
+}
+
+_log() {
+	perl -e '
+	use strict;
+	use warnings;
+	use Sys::Syslog qw(:standard :macros);
+	my $net="'"$1"'";
+	my $pid="'"$$"'";
+	my $line;
+	my $prio;
+	my $proc;
+	while(<stdin>) {
+		chomp($line=$_);
+		my ($time,$date,$level,$pname,$system, $msg) = split(/ /,$line,6);
+		$prio;
+		if ($level =~ /INF/) {
+			$prio = LOG_INFO;
+		}
+		if ($level =~ /DBG/) {
+			$prio = LOG_DEBUG;
+		}
+		if (!defined($prio)) {
+			$prio = LOG_INFO;
+		}
+		if (!defined($proc) && defined($pname)) {
+			$proc = lc($pname);
+			$proc =~ s/:$//;
+			openlog("$proc", "ndelay", "daemon");
+			syslog(LOG_INFO, "$net: Starting");
+		}
+		if (!defined($proc)) {
+			openlog("?", "ndelay", "daemon");
+			syslog($prio, $net.": ".$line);
+			closelog();
+			next;
+		}
+		syslog($prio, $net.": ".lc($system)." ".$msg);
+	}'
 }
 
 rc_cmd $1
