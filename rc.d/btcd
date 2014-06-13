@@ -13,8 +13,9 @@ pexp="btcd.*btcd.conf"
 rc_reload=NO
 
 rc_start() {
-	${rcexec} "/usr/bin/time -l ${daemon} ${daemon_flags}" 2>&1 | \
+	${rcexec} "${daemon} ${daemon_flags}" 2>&1 | \
 		_log mainnet &
+	renice -n -15 $(pgrep btcd)
 }
 
 _log() {
@@ -29,15 +30,17 @@ _log() {
 	my $proc;
 	while(<stdin>) {
 		chomp($line=$_);
-		my ($time,$date,$level,$pname,$system, $msg) = split(/ /,$line,6);
-		$prio;
+		my ($time,$date,$level,$pname,$system, $msg) =
+		    split(/ /,$line,6);
+		my $logall = 0;
 		if ($level =~ /INF/) {
 			$prio = LOG_INFO;
-		}
-		if ($level =~ /DBG/) {
+		} elsif ($level =~ /DBG/) {
 			$prio = LOG_DEBUG;
-		}
-		if (!defined($prio)) {
+		} elsif ($level =~ /WRN/) {
+			$prio = LOG_WARNING;
+		} else {
+			$logall = 1;
 			$prio = LOG_INFO;
 		}
 		if (!defined($proc) && defined($pname)) {
@@ -52,7 +55,12 @@ _log() {
 			closelog();
 			next;
 		}
-		syslog($prio, $net.": ".lc($system)." ".$msg);
+		my $logmsg = $msg;
+		if ($logall == 0) {
+			syslog($prio, $net.": ".lc($system)." ".$msg);
+			next;
+		}
+		syslog($prio, $net.": ".$line);
 	}'
 }
 
