@@ -1,0 +1,27 @@
+#!/bin/ksh
+
+
+btcd -V
+echo
+go version
+echo
+echo "system: $(uname -a)"
+echo
+echo "datadir: (on local disk ffs)"
+df -hi ~_btc
+echo
+mount -v | grep /home
+echo
+echo "sysctls:"
+sysctl kern.bufcachepercent
+echo
+echo "user: $(sudo grep _btc /etc/master.passwd)"
+echo
+echo "login.conf staff class:"
+getcap -f /etc/login.conf staff|perl -e '$s=<STDIN>;foreach my $r (split(/	:/,$s)) { $r =~ s/://; if ($r eq "staff" || $r =~ m/^\s$/|| length($r) < 1) { next; }; print "  ",$r,"\n"; }'
+echo
+
+cd ~/go/src/github.com/conformal; for d in *; do (cd $d; echo "git rev for github.com/conformal/$d:"; git log | head -3; echo); done
+echo
+
+#cat /tmp/a
