@@ -14,54 +14,8 @@ rc_reload=NO
 
 rc_start() {
 	${rcexec} "${daemon} ${daemon_flags}" 2>&1 | \
-		_log mainnet &
+		btclog mainnet $$ &
 	renice -n -15 $(pgrep btcd)
-}
-
-_log() {
-	perl -e '
-	use strict;
-	use warnings;
-	use Sys::Syslog qw(:standard :macros);
-	my $net="'"$1"'";
-	my $pid="'"$$"'";
-	my $line;
-	my $prio;
-	my $proc;
-	while(<stdin>) {
-		chomp($line=$_);
-		my ($time,$date,$level,$pname,$system, $msg) =
-		    split(/ /,$line,6);
-		my $logall = 0;
-		if ($level =~ /INF/) {
-			$prio = LOG_INFO;
-		} elsif ($level =~ /DBG/) {
-			$prio = LOG_DEBUG;
-		} elsif ($level =~ /WRN/) {
-			$prio = LOG_WARNING;
-		} else {
-			$logall = 1;
-			$prio = LOG_INFO;
-		}
-		if (!defined($proc) && defined($pname)) {
-			$proc = lc($pname);
-			$proc =~ s/:$//;
-			openlog("$proc", "ndelay", "daemon");
-			syslog(LOG_INFO, "$net: Starting");
-		}
-		if (!defined($proc)) {
-			openlog("?", "ndelay", "daemon");
-			syslog($prio, $net.": ".$line);
-			closelog();
-			next;
-		}
-		my $logmsg = $msg;
-		if ($logall == 0) {
-			syslog($prio, $net.": ".lc($system)." ".$msg);
-			next;
-		}
-		syslog($prio, $net.": ".$line);
-	}'
 }
 
 rc_cmd $1
