@@ -27,24 +27,25 @@ my %crawlers;
 while(<stdin>) {
 	chomp($line=$_);
 	# XXX davec is open to a pull request to change this in the code
-	$line =~ s/new valid peer/valid peer/;
-	if ($line =~ /valid peer\s([^\s]*)\s.*getaddr.bitnodes.io/) {
+	$line =~ s/new valid peer/\+peer/i;
+	if ($line =~ /\+peer\s([^\s]*)\s.*getaddr.bitnodes.io/) {
 		my $ip = $1;
 		$ip =~ s/^(.*):[0-9]*$/$1/;
 		if (defined($crawlers{$ip})) {
 			$crawlers{$ip}++;
 			next;
+		} else {
+			$crawlers{$ip}=1;
+			$line =~ s/\+peer/\+crawler/;
 		}
-		$crawlers{$ip}=1;
-		$line =~ s/valid peer/crawler/;
 	}
-	if ($line =~ /lost peer\s([^\s]*)\s/) {
+	$line =~ s/lost peer/-peer/ig;
+	if ($line =~ /-peer\s([^\s]*)\s/) {
 		my $ip = $1;
 		$ip =~ s/^(.*):[0-9]*$/$1/;
 		if (defined($crawlers{$ip})) {
 			next;
 		}
-		$line =~ s/lost peer/peer EOF/g;
 	}
 	my ($time,$date,$level,$pname,$system, $msg) =
 	    split(/ /,$line,6);
