@@ -47,7 +47,7 @@ while(<stdin>) {
 			next;
 		}
 	}
-	$line =~ s/syncing to block height ([0-9]+) from peer (.*)$/.sync $2 to b#$1/i;
+	$line =~ s/syncing to block height ([0-9]+) from peer (.*)$/synch $2 with b#$1/i;
 	my ($time,$date,$level,$pname,$system, $msg) =
 	    split(/ /,$line,6);
 	my $logall = 0;
