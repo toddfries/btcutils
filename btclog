@@ -22,9 +22,30 @@ my $pid=shift @ARGV;
 my $line;
 my $prio;
 my $proc;
+my %crawlers;
 
 while(<stdin>) {
 	chomp($line=$_);
+	# XXX davec is open to a pull request to change this in the code
+	$line =~ s/new valid peer/valid peer/;
+	if ($line =~ /valid peer\s([^\s]*)\s.*getaddr.bitnodes.io/) {
+		my $ip = $1;
+		$ip =~ s/^(.*):[0-9]*$/$1/;
+		if (defined($crawlers{$ip})) {
+			$crawlers{$ip}++;
+			next;
+		}
+		$crawlers{$ip}=1;
+		$line =~ s/valid peer/crawler/;
+	}
+	if ($line =~ /lost peer\s([^\s]*)\s/) {
+		my $ip = $1;
+		$ip =~ s/^(.*):[0-9]*$/$1/;
+		if (defined($crawlers{$ip})) {
+			next;
+		}
+		$line =~ s/lost peer/peer EOF/g;
+	}
 	my ($time,$date,$level,$pname,$system, $msg) =
 	    split(/ /,$line,6);
 	my $logall = 0;
@@ -48,6 +69,7 @@ while(<stdin>) {
 		$msg =~ s/ -0500 CDT\)/ CDT/g;
 		$msg =~ s/, height /, b#/;
 		$msg =~ s/^(.*), ([0-9]{4,4})-([0-9]{2,2})-([0-9]{2,2}) (.*)$/$1 $2$3$4 $5/;
+		$msg =~ s/ \(([0-9]+) tx/, $1tx/;
 	}
 	if (!defined($proc) && defined($pname)) {
 		$proc = lc($pname);
