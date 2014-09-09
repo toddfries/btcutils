@@ -36,7 +36,7 @@ while(<stdin>) {
 			next;
 		} else {
 			$crawlers{$ip}=1;
-			$line =~ s/\+peer/\+crawler/;
+			$line =~ s/\+peer/\+crwl/;
 		}
 	}
 	$line =~ s/lost peer/-peer/ig;
@@ -47,6 +47,7 @@ while(<stdin>) {
 			next;
 		}
 	}
+	$line =~ s/syncing to block height ([0-9]+) from peer (.*)$/.sync $2 to b#$1/i;
 	my ($time,$date,$level,$pname,$system, $msg) =
 	    split(/ /,$line,6);
 	my $logall = 0;
