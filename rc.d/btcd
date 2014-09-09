@@ -13,7 +13,7 @@ pexp="btcd.*btcd.conf"
 rc_reload=NO
 
 rc_start() {
-	${rcexec} "${daemon} ${daemon_flags}" 2>&1 | \
+	${rcexec} "/usr/bin/time -l ${daemon} ${daemon_flags}" 2>&1 | \
 		btclog mainnet $$ &
 	renice -n -15 $(pgrep btcd)
 }
