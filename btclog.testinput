@@ -1,0 +1,9 @@
+11:00:54 2014-09-09 [INF] BTCD: Version foo
+11:00:54 2014-09-09 [INF] BTCD: New valid peer [2a01:4f8:202:81b1::2]:9782 (inbound) (/getaddr.bitnodes.io:0.1/)
+11:00:54 2014-09-09 [INF] BTCD: New valid peer [2a01:4f8:202:81b1::2]:9782 (inbound) (/getaddr.bitnodes.io:0.1/)
+11:00:54 2014-09-09 [INF] BTCD: New valid peer [2a01:4f8:202:81b1::2]:9782 (inbound) (/getaddr.bitnodes.io:0.1/)
+11:00:54 2014-09-09 [INF] BTCD: New valid peer [2a01:4f8:202:81b1::2]:9782 (inbound) (/getaddr.bitnodes.io:0.1/)
+11:00:54 2014-09-09 [INF] BTCD: Lost peer [2a01:4f8:202:81b1::2]:9782 (inbound)
+11:00:54 2014-09-09 [INF] BTCD: New valid peer [2a01:4f8:202:81b1::3]:9782 (inbound) (/foo:0.3/)
+11:00:54 2014-09-09 [INF] BTCD: Lost peer [2a01:4f8:202:81b1::3]:9782 (inbound)
+11:00:54 2014-09-09 [INF] BTCD: Syncing to block height 319864 from peer 71.232.87.227:8333
