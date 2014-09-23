@@ -28,16 +28,18 @@ while(<stdin>) {
 	chomp($line=$_);
 	# XXX davec is open to a pull request to change this in the code
 	$line =~ s/new valid peer/\+peer/i;
-	foreach my $re (("getaddr.bitnodes.io","bitcoin-seeder")) {
-		if ($line =~ /\+peer\s([^\s]*)\s.*$re/) {
-			my $ip = $1;
-			$ip =~ s/^(.*):[0-9]*$/$1/;
-			if (defined($crawlers{$ip})) {
-				$crawlers{$ip}++;
-				next;
-			} else {
+	if ($line =~ /\+peer\s([^\s]*)\s\(inbound\)\s\(\/(.*)\/\)$/) {
+		my ($ip,$agent) = ($1,$2);
+		$ip =~ s/^(.*):[0-9]*$/$1/;
+		if (defined($crawlers{$ip})) {
+			$crawlers{$ip}++;
+			next;
+		}
+		foreach my $re (("getaddr.bitnodes.io","bitcoin.seeder")) {
+			if ($agent =~ /${re}/) {
 				$crawlers{$ip}=1;
 				$line =~ s/\+peer/\+crwl/;
+				last;
 			}
 		}
 	}
