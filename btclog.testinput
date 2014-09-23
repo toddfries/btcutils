@@ -13,3 +13,4 @@
 11:00:54 2014-09-09 [INF] BTCD: Lost peer [2a01:4f8:202:81b1::4]:9782 (inbound)
 11:00:54 2014-09-09 [INF] BTCD: Lost peer [2a01:4f8:202:81b1::4]:9782 (inbound)
 11:00:54 2014-09-09 [INF] BTCD: Syncing to block height 319864 from peer 71.232.87.227:8333
+11:00:54 2014-09-09 [INF] BTCD: Peer [2a01:e34:eddf:9330:5c91:595b:ecdc:9800]:56314 (inbound) no answer for 5 minutes, disconnecting 

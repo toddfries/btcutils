@@ -52,6 +52,7 @@ while(<stdin>) {
 		}
 	}
 	$line =~ s/syncing to block height ([0-9]+) from peer (.*)$/synch $2 with b#$1/i;
+	$line =~ s/peer\s(.+)\s\((.+)\)\sno answer for ([0-9]+) minutes, disconnecting/-peer $1 \($2\) $3 min timeout/i;
 	my ($time,$date,$level,$pname,$system, $msg) =
 	    split(/ /,$line,6);
 	my $logall = 0;
