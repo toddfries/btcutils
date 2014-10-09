@@ -24,6 +24,8 @@ my $prio;
 my $proc;
 my %crawlers;
 
+my @crawlregs = ("getaddr.bitnodes.io","bitcoin.seeder","Snoopy");
+
 while(<stdin>) {
 	chomp($line=$_);
 	# XXX davec is open to a pull request to change this in the code
@@ -35,7 +37,7 @@ while(<stdin>) {
 			$crawlers{$ip}++;
 			next;
 		}
-		foreach my $re (("getaddr.bitnodes.io","bitcoin.seeder")) {
+		foreach my $re (@crawlregs) {
 			if ($agent =~ /${re}/) {
 				$crawlers{$ip}=1;
 				$line =~ s/\+peer/\+crwl/;
