@@ -24,7 +24,13 @@ my $prio;
 my $proc;
 my %crawlers;
 
-my @crawlregs = ("getaddr.bitnodes.io","bitcoin.seeder","Snoopy");
+my @crawlregs = (
+	"getaddr.bitnodes.io",
+	"bitcoin.seeder",
+	"Snoopy",
+	"BTCXchange.ro",
+	"DNSSeed"
+);
 
 while(<stdin>) {
 	chomp($line=$_);
