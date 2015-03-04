@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $OpenBSD: xdm,v 1.1 2011/07/07 18:42:17 robert Exp $
+# $OpenBSD$
 
-daemon="/home/todd/go/bin/btcd"
-daemon_flags="-C ~_btc/.btcd/btcd.conf"
 daemon_user="_btc"
+daemon="/home/todd/go/bin/btcd"
+daemon_flags="-C ~${daemon_user}/.btcd/btcd.conf"
 
 . /etc/rc.d/rc.subr
 
@@ -14,7 +14,7 @@ rc_reload=NO
 
 rc_start() {
 	${rcexec} "/usr/bin/time -l ${daemon} ${daemon_flags}" 2>&1 | \
-		btclog mainnet $$ &
+		btclog main $$ &
 	renice -n -15 $(pgrep btcd)
 }
 
