@@ -104,7 +104,7 @@ while(<stdin>) {
 			}
 				
 			my $txrate = $tx/$secs;
-			my $newstr = sprintf "blk%s %4dtx in %0.2fs, %0.2ftx/s",
+			my $newstr = sprintf "blk%s %4dtx in %6.2fs, %6.2ftx/s",
 			
 			    ($blkcount > 1) ? "s" : " ", $tx, $secs, $txrate;
 			$msg =~ s/ block[s]? in .*tx,/ ${newstr},/;
