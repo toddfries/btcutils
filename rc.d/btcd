@@ -14,7 +14,7 @@ rc_reload=NO
 
 rc_start() {
 	${rcexec} "/usr/bin/time -l ${daemon} ${daemon_flags}" 2>&1 | \
-		btclog mainnet $$ &
+		/usr/local/sbin/btclog mainnet $$ &
 	renice -n -15 $(pgrep btcd)
 }
 
