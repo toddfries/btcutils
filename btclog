@@ -80,6 +80,8 @@ while(<stdin>) {
 		$prio = LOG_DEBUG;
 	} elsif ($level =~ /WRN/) {
 		$prio = LOG_WARNING;
+	} elsif ($level =~ /ERR/) {
+		$prio = LOG_ERR;
 	} else {
 		$logall = 1;
 		$prio = LOG_INFO;
