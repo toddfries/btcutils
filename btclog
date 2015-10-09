@@ -101,6 +101,10 @@ while(<stdin>) {
 				my $min;
 				($min,$secs) = ($1,$2);
 				$secs += $min * 60;
+			} elsif ($secstr =~ /^([0-9]+)h([0-9]+)m([0-9]+.*)$/
+				my ($hour,$min);
+				($hour,$min,$secs) = ($1, $2, $3);
+				$secs += $min * 60 + $hour * 3600;
 			} else {
 				$secs = $secstr;
 			}
