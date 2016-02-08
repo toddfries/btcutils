@@ -1,0 +1,140 @@
+#!/usr/bin/perl
+
+# Copyright (c) 2014 Todd T. Fries <todd@fries.net>
+#
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
+#
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+use strict;
+use warnings;
+use Sys::Syslog qw(:standard :macros);
+my $net=shift @ARGV;
+my $pid=shift @ARGV;
+my $outecho=shift @ARGV;
+my $line;
+my $prio;
+my $proc;
+my %crawlers;
+
+my @crawlregs = (
+	"getaddr.bitnodes.io",
+	"decred.seeder",
+	"Snoopy",
+	"BTCXchange.ro",
+	"DNSSeed"
+);
+
+if (defined($outecho)) {
+	open(O,">> ${outecho}");
+}
+while(<stdin>) {
+	chomp($line=$_);
+	if (defined($outecho)) {
+		print O $_;
+	}
+	# XXX davec is open to a pull request to change this in the code
+	$line =~ s/new valid peer/\+peer/i;
+	if ($line =~ /\+peer\s([^\s]*)\s\(inbound\)\s\(\/(.*)\/\)$/) {
+		my ($ip,$agent) = ($1,$2);
+		$ip =~ s/^(.*):[0-9]*$/$1/;
+		if (defined($crawlers{$ip})) {
+			$crawlers{$ip}++;
+			next;
+		}
+		foreach my $re (@crawlregs) {
+			if ($agent =~ /${re}/) {
+				$crawlers{$ip}=1;
+				$line =~ s/\+peer/\+crwl/;
+				last;
+			}
+		}
+	}
+	$line =~ s/lost peer/-peer/ig;
+	if ($line =~ /-peer\s([^\s]*)\s/) {
+		my $ip = $1;
+		$ip =~ s/^(.*):[0-9]*$/$1/;
+		if (defined($crawlers{$ip})) {
+			next;
+		}
+	}
+	$line =~ s/syncing to block height ([0-9]+) from peer (.*)$/synch $2 with b#$1/i;
+	$line =~ s/peer\s(.+)\s\((.+)\)\sno answer for ([0-9]+) minutes, disconnecting/-peer $1 \($2\) $3 min timeout/i;
+	my ($time,$date,$level,$pname,$system, $msg) =
+	    split(/ /,$line,6);
+	my $logall = 0;
+	if (!defined($level)) {
+		$level = "";
+	}
+	if ($level =~ /INF/) {
+		$prio = LOG_INFO;
+	} elsif ($level =~ /DBG/) {
+		$prio = LOG_DEBUG;
+	} elsif ($level =~ /WRN/) {
+		$prio = LOG_WARNING;
+	} elsif ($level =~ /ERR/) {
+		$prio = LOG_ERR;
+	} else {
+		$logall = 1;
+		$prio = LOG_INFO;
+	}
+	if ($logall == 0) {
+		$msg =~ s/processed /got /i;
+		$msg =~ s/ in the last / in /;
+		$msg =~ s/transactions/tx/g;
+		$msg =~ s/ -0500 CDT\)/ CDT/g;
+		$msg =~ s/, height /, b#/;
+		$msg =~ s/^(.*), ([0-9]{4,4})-([0-9]{2,2})-([0-9]{2,2}) (.*)$/$1 $2$3$4 $5/;
+		$msg =~ s/ \(([0-9]+) tx/ $1tx/;
+		if ($msg =~ m/([0-9]+) block[s]? in ([0-9]+.*)s ([0-9]+)tx/) {
+			my ($blkcount,$secstr,$tx) = ($1,$2,$3);
+			my $secs = 0.0;
+			if ($secstr =~ /^([0-9]+)m([0-9]+.*)$/) {
+				my $min;
+				($min,$secs) = ($1,$2);
+				$secs += $min * 60;
+			} elsif ($secstr =~ /^([0-9]+)h([0-9]+)m([0-9]+.*)$/) {
+				my ($hour,$min);
+				($hour,$min,$secs) = ($1, $2, $3);
+				$secs += $min * 60 + $hour * 3600;
+			} else {
+				$secs = $secstr;
+			}
+				
+			my $txrate = $tx/$secs;
+			my $newstr = sprintf "blk%s %4dtx in %6.2fs, %6.2ftx/s",
+			
+			    ($blkcount > 1) ? "s" : " ", $tx, $secs, $txrate;
+			$msg =~ s/ block[s]? in .*tx,/ ${newstr},/;
+		}
+	}
+	if (!defined($proc) && defined($pname)) {
+		$proc = lc($pname);
+		$proc =~ s/:$//;
+		openlog("$proc", "ndelay", "daemon");
+		syslog(LOG_INFO, "$net: Starting");
+	}
+	if (!defined($proc)) {
+		openlog("?", "ndelay", "daemon");
+		syslog($prio, $net.": ".$line);
+		closelog();
+		next;
+	}
+	my $logmsg = $msg;
+	if ($logall == 0) {
+		syslog($prio, $net.": ".lc($system)." ".$msg);
+		next;
+	}
+	syslog($prio, $net.": ".$line);
+}
+if (defined($outecho)) {
+	close(O);
+}
